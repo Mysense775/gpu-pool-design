@@ -579,11 +579,33 @@ API для конечных клиентов, арендующих GPU. Испо
 - [ ] Мониторинг в реальном времени
 - [ ] Техподдержка (чат)
 
-### Phase 3 (4+ недели)
+### Phase 3: Инфраструктура оркестрации (6-8 недель) ⭐ КЛЮЧЕВОЙ ЭТАП
+- [ ] **Развёртывание Kubernetes кластера**
+  - Установка на GPU-серверах
+  - NVIDIA GPU Operator
+  - Container Runtime (containerd)
+- [ ] **Настройка оркестрации**
+  - Ray Cluster / Kubeflow
+  - Task Scheduler
+  - Auto-scaling engine
+- [ ] **Мониторинг кластера**
+  - Prometheus + Grafana для GPU
+  - NVIDIA DCGM exporter
+  - Алерты на температуру/загрузку
+- [ ] **API Marketplace (собственный)**
+  - Task Queue (RabbitMQ/Kafka)
+  - Job Orchestrator
+  - Resource Allocator
+- [ ] **CI/CD для GPU-нод**
+  - Автоматическое обновление
+  - Rollback при ошибках
+  - Health checks
+
+### Phase 4 (4+ недели)
 - [ ] Мобильное приложение
-- [ ] API для поставщиков
-- [ ] Дополнительные marketplace
-- [ ] ML-мониторинг
+- [ ] Расширенная аналитика
+- [ ] ML-мониторинг и предсказания
+- [ ] Интеграция с внешними ML-платформами
 
 ---
 
