@@ -322,6 +322,198 @@ API для конечных клиентов, арендующих GPU. Испо
          └───────────────────────────────────┘
 ```
 
+---
+
+## 3.1 ТЕХНОЛОГИЧЕСКИЙ СТЕК (ДЕТАЛЬНО)
+
+### Frontend (Web Dashboard)
+
+#### **React 18 + TypeScript**
+- **Почему:** Самая популярная библиотека, огромная экосистема
+- **Компоненты:** Ant Design / Material-UI — готовые UI-компоненты
+- **State management:** Zustand или Redux Toolkit
+- **Charts:** Recharts / Chart.js — графики мониторинга
+- **WebSocket:** Socket.io-client — real-time обновления
+
+#### **Next.js 14 (опционально)**
+- SSR для SEO и быстрой загрузки
+- API Routes для простых endpoint
+- Image optimization
+
+---
+
+### Backend API
+
+#### **FastAPI (Python)** ⭐ РЕКОМЕНДУЕТСЯ
+- **Почему:** Скорость (async), автодокументация (OpenAPI), типизация
+- **ASGI:** Uvicorn + Gunicorn
+- **Валидация:** Pydantic — автоматическая валидация данных
+- **Авторизация:** FastAPI-Users или собственная на JWT
+- **Rate limiting:** Slowapi
+
+**Альтернатива:** Node.js + Express/NestJS
+
+---
+
+### База данных
+
+#### **PostgreSQL 15+**
+- **Почему:** Надёжность, сложные запросы, JSON поддержка
+- **ORM:** SQLAlchemy (Python) или Prisma (Node.js)
+- **Миграции:** Alembic
+- **Backup:** pg_dump ежедневно
+
+#### **Redis**
+- **Кеширование:** сессии, частые запросы
+- **Очереди:** Celery / RQ для background задач
+- **Rate limiting:** счётчики запросов
+
+---
+
+### Message Queue (Очереди задач)
+
+#### **RabbitMQ** или **Apache Kafka**
+- **Назначение:** 
+  - Асинхронная обработка биллинга
+  - Вебхуки (webhooks)
+  - Логирование событий
+  - Уведомления
+
+---
+
+### Контейнеризация & Orchestration
+
+#### **Docker + Docker Compose**
+- Контейнеризация всех сервисов
+- Локальная разработка
+- Простое развёртывание
+
+#### **Kubernetes (K8s)** — для production
+- **Оркестрация:** авто-масштабирование подов
+- **Ingress:** nginx-ingress-controller
+- **Monitoring:** Prometheus + Grafana
+- **Logs:** ELK stack или Loki
+
+---
+
+### GPU Orchestration (Оркестрация)
+
+#### **NVIDIA GPU Operator**
+- Автоматическая настройка GPU в Kubernetes
+- Драйверы, CUDA, device-plugin
+
+#### **Kubeflow / Ray**
+- **Kubeflow:** ML pipelines на Kubernetes
+- **Ray:** распределённые ML задачи
+- **Dask:** параллельные вычисления на Python
+
+#### **Slurm** (альтернатива для HPC)
+- Классический планировщик кластеров
+- Используется в суперкомпьютерах
+
+---
+
+### Мониторинг & Observability
+
+#### **Prometheus**
+- Сбор метрик (CPU, GPU, RAM, температура)
+- Alertmanager — алерты
+
+#### **Grafana**
+- Визуализация метрик
+- Dashboard для администратора
+
+#### **ELK Stack**
+- **Elasticsearch:** хранение логов
+- **Logstash:** обработка логов
+- **Kibana:** просмотр логов
+
+#### **Jaeger / Zipkin**
+- Distributed tracing — отслеживание запросов
+
+---
+
+### Безопасность
+
+#### **SSL/TLS**
+- Let's Encrypt (бесплатные сертификаты)
+- Cert-manager в Kubernetes
+- TLS 1.3 обязательно
+
+#### **Firewall & VPN**
+- **WireGuard:** VPN для доступа к GPU
+- **ufw / iptables:** firewall на серверах
+- **Cloudflare:** DDoS защита, CDN
+
+#### **Secrets Management**
+- **HashiCorp Vault:** хранение секретов
+- Или: Kubernetes Secrets + Sealed Secrets
+
+---
+
+### Интеграции
+
+#### **VAST.AI API**
+- REST API для управления хостами
+- Webhooks для событий
+
+#### **Платёжные системы**
+- **Крипта:** Coinbase Commerce / BTCPay Server
+- **Рубли:** ЮKassa / Robokassa / СБП
+- **Международные:** Stripe / Paddle
+
+#### **Уведомления**
+- **Email:** SendGrid / Mailgun
+- **Telegram:** Bot API
+- **SMS:** Twilio / smsc.ru
+
+---
+
+### Инфраструктура (Infrastructure)
+
+#### **Cloud провайдеры**
+- **Hetzner:** дешёвые серверы в Европе
+- **Selectel:** российские серверы
+- **AWS/GCP/Azure:** для глобального масштаба
+
+#### **Bare Metal (свои сервера)**
+- **OS:** Ubuntu Server 22.04 LTS
+- **Docker + K8s** на каждом GPU-сервере
+- **PXE boot** — массовая установка
+
+---
+
+### CI/CD (Развёртывание)
+
+#### **GitHub Actions / GitLab CI**
+- Автоматическое тестирование
+- Сборка Docker образов
+- Деплой в Kubernetes
+
+#### **ArgoCD**
+- GitOps для Kubernetes
+- Автосинхронизация состояния
+
+---
+
+## ИТОГОВЫЙ СТЕК (РЕКОМЕНДАЦИЯ)
+
+| Компонент | Технология | Альтернатива |
+|-----------|------------|--------------|
+| Frontend | React 18 + TypeScript | Vue 3 |
+| Backend | FastAPI (Python) | Node.js + NestJS |
+| Database | PostgreSQL 15 | MySQL 8 |
+| Cache | Redis | Memcached |
+| Queue | RabbitMQ | Apache Kafka |
+| Container | Docker + Kubernetes | Docker Compose |
+| GPU Orchestration | NVIDIA GPU Operator + Ray | Slurm |
+| Monitoring | Prometheus + Grafana | Datadog |
+| Logs | ELK Stack | Grafana Loki |
+| Auth | JWT + bcrypt | Auth0 |
+| Payments | Stripe + Coinbase | Paddle |
+
+---
+
 ### 3.2 База данных
 
 #### Таблицы:
