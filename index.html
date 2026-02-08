@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPU Pool - Design Concept</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0a0f0a;
+            color: white;
+            min-height: 100vh;
+        }
+        
+        /* Background grid */
+        .bg-grid {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image: 
+                linear-gradient(rgba(0, 255, 136, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 136, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none;
+        }
+        
+        .glow {
+            position: fixed;
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(0, 255, 136, 0.15), transparent 70%);
+            top: -200px; right: -200px;
+            pointer-events: none;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 80px;
+        }
+        
+        .logo {
+            font-size: 28px;
+            font-weight: 800;
+            color: #00ff88;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .nav {
+            display: flex;
+            gap: 40px;
+        }
+        
+        .nav a {
+            color: rgba(255,255,255,0.7);
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.3s;
+        }
+        
+        .nav a:hover { color: #00ff88; }
+        
+        .btn {
+            background: linear-gradient(135deg, #00ff88, #00cc6a);
+            color: #0a0f0a;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            border: none;
+            cursor: pointer;
+        }
+        
+        /* Hero */
+        .hero {
+            text-align: center;
+            margin-bottom: 100px;
+        }
+        
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            padding: 8px 16px;
+            border-radius: 50px;
+            font-size: 12px;
+            color: #00ff88;
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            font-size: 64px;
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #fff 0%, #888 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        h1 span { color: #00ff88; -webkit-text-fill-color: #00ff88; }
+        
+        .subtitle {
+            font-size: 20px;
+            color: rgba(255,255,255,0.6);
+            margin-bottom: 40px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .hero-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-bottom: 50px;
+        }
+        
+        .btn-outline {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 60px;
+        }
+        
+        .stat {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 36px;
+            font-weight: 800;
+            color: #00ff88;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: rgba(255,255,255,0.5);
+            margin-top: 5px;
+        }
+        
+        /* Calculator */
+        .section-title {
+            font-size: 40px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 50px;
+        }
+        
+        .calculator {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 24px;
+            padding: 40px;
+            margin-bottom: 80px;
+        }
+        
+        .calc-row {
+            margin-bottom: 30px;
+        }
+        
+        .calc-label {
+            font-size: 14px;
+            color: rgba(255,255,255,0.6);
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .gpu-chips {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .chip {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+        
+        .chip:hover, .chip.active {
+            background: rgba(0, 255, 136, 0.1);
+            border-color: #00ff88;
+            color: #00ff88;
+        }
+        
+        .result-box {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 16px;
+            padding: 30px;
+            margin-top: 30px;
+        }
+        
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            font-size: 16px;
+        }
+        
+        .result-row:last-child {
+            border-bottom: none;
+            margin-top: 10px;
+            padding-top: 20px;
+            border-top: 2px solid #00ff88;
+        }
+        
+        .result-label { color: rgba(255,255,255,0.6); }
+        
+        .result-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+        }
+        
+        .result-value.positive { color: #00ff88; }
+        .result-value.negative { color: #ff6b6b; }
+        
+        .total-income {
+            font-size: 32px;
+            font-weight: 800;
+            color: #00ff88;
+        }
+        
+        /* GPU Cards */
+        .gpu-section {
+            margin-bottom: 80px;
+        }
+        
+        .gpu-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+        
+        .gpu-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 30px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        
+        .gpu-card:hover {
+            transform: translateY(-5px);
+            border-color: #00ff88;
+            background: rgba(0, 255, 136, 0.05);
+        }
+        
+        .gpu-tier {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: rgba(255,255,255,0.5);
+            margin-bottom: 15px;
+        }
+        
+        .gpu-name {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .gpu-price {
+            font-size: 36px;
+            font-weight: 800;
+            color: #00ff88;
+            font-family: 'JetBrains Mono', monospace;
+            margin-bottom: 5px;
+        }
+        
+        .gpu-period {
+            font-size: 14px;
+            color: rgba(255,255,255,0.5);
+        }
+        
+        .gpu-income {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            font-size: 14px;
+            color: rgba(255,255,255,0.6);
+        }
+        
+        .gpu-income strong {
+            color: #00ff88;
+            font-size: 18px;
+        }
+        
+        /* How it works */
+        .steps {
+            display: flex;
+            justify-content: space-between;
+            gap: 40px;
+            margin-bottom: 80px;
+        }
+        
+        .step {
+            flex: 1;
+            text-align: center;
+            padding: 30px;
+        }
+        
+        .step-number {
+            width: 60px;
+            height: 60px;
+            background: rgba(0, 255, 136, 0.1);
+            border: 2px solid #00ff88;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: 700;
+            color: #00ff88;
+            margin: 0 auto 20px;
+        }
+        
+        .step-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .step-desc {
+            font-size: 14px;
+            color: rgba(255,255,255,0.6);
+            line-height: 1.6;
+        }
+        
+        /* Footer CTA */
+        .cta {
+            text-align: center;
+            padding: 80px 0;
+        }
+        
+        .cta h2 {
+            font-size: 48px;
+            font-weight: 800;
+            margin-bottom: 20px;
+        }
+        
+        .cta p {
+            font-size: 18px;
+            color: rgba(255,255,255,0.6);
+            margin-bottom: 40px;
+        }
+        
+        .btn-large {
+            padding: 20px 40px;
+            font-size: 18px;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 40px 0;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.4);
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-grid"></div>
+    <div class="glow"></div>
+    
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">⚡ GPU Pool</div>
+            <nav class="nav">
+                <a href="#">Калькулятор</a>
+                <a href="#">Тарифы</a>
+                <a href="#">Статистика</a>
+            </nav>
+            <button class="btn">Войти</button>
+        </header>
+        
+        <!-- Hero -->
+        <section class="hero">
+            <div class="badge">🔥 Уже 340+ GPU в пуле</div>
+            <h1>Пассивный доход<br>на <span>видеокартах</span></h1>
+            <p class="subtitle">Подключите GPU к международным пулам и зарабатывайте от 30 ₽/час на каждой карте</p>
+            <div class="hero-buttons">
+                <button class="btn">🚀 Начать зарабатывать</button>
+                <button class="btn btn-outline">📊 Рассчитать доход</button>
+            </div>
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-value">340+</div>
+                    <div class="stat-label">GPU в пуле</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">85+</div>
+                    <div class="stat-label">Владельцев</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">99.7%</div>
+                    <div class="stat-label">Uptime</div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Calculator -->
+        <section>
+            <h2 class="section-title">⚡ Калькулятор доходности</h2>
+            <div class="calculator">
+                <div class="calc-row">
+                    <div class="calc-label">Выберите GPU</div>
+                    <div class="gpu-chips">
+                        <div class="chip active">RTX 3060</div>
+                        <div class="chip">RTX 3070</div>
+                        <div class="chip">RTX 3090</div>
+                        <div class="chip">RTX 4090</div>
+                        <div class="chip">A100</div>
+                        <div class="chip">H100</div>
+                    </div>
+                </div>
+                
+                <div class="calc-row">
+                    <div class="calc-label">Количество</div>
+                    <div class="gpu-chips">
+                        <div class="chip">1</div>
+                        <div class="chip active">2</div>
+                        <div class="chip">4</div>
+                        <div class="chip">8</div>
+                        <div class="chip">16</div>
+                    </div>
+                </div>
+                
+                <div class="result-box">
+                    <div class="result-row">
+                        <span class="result-label">Доход от аренды</span>
+                        <span class="result-value positive">50 400 ₽</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Затраты на электричество</span>
+                        <span class="result-value negative">-12 600 ₽</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Комиссия платформы 10%</span>
+                        <span class="result-value negative">-3 780 ₽</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">💰 Чистый доход</span>
+                        <span class="result-value total-income">34 020 ₽/мес</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- GPU Cards -->
+        <section class="gpu-section">
+            <h2 class="section-title">💎 Типы GPU и доходность</h2>
+            <div class="gpu-grid">
+                <div class="gpu-card">
+                    <div class="gpu-tier">Бюджетный</div>
+                    <div class="gpu-name">RTX 3060</div>
+                    <div class="gpu-price">35 ₽</div>
+                    <div class="gpu-period">за час</div>
+                    <div class="gpu-income">~<strong>25 000 ₽</strong>/мес чистыми</div>
+                </div>
+                <div class="gpu-card">
+                    <div class="gpu-tier">Средний</div>
+                    <div class="gpu-name">RTX 3090</div>
+                    <div class="gpu-price">55 ₽</div>
+                    <div class="gpu-period">за час</div>
+                    <div class="gpu-income">~<strong>40 000 ₽</strong>/мес чистыми</div>
+                </div>
+                <div class="gpu-card">
+                    <div class="gpu-tier">Премиум</div>
+                    <div class="gpu-name">H100</div>
+                    <div class="gpu-price">500 ₽</div>
+                    <div class="gpu-period">за час</div>
+                    <div class="gpu-income">~<strong>350 000 ₽</strong>/мес чистыми</div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- How it works -->
+        <section>
+            <h2 class="section-title">🚀 Как начать зарабатывать</h2>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-title">Регистрация</div>
+                    <div class="step-desc">Создайте аккаунт за 2 минуты. Укажите данные для выплат.</div>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-title">Подключение</div>
+                    <div class="step-desc">Установите нашего агента на риг. Всё настроится автоматически.</div>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-title">Получайте доход</div>
+                    <div class="step-desc">GPU начинает работать и приносить деньги. Выводите когда удобно.</div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- CTA -->
+        <section class="cta">
+            <h2>Готовы начать?</h2>
+            <p>Присоединяйтесь к 85+ владельцам GPU и получайте стабильный пассивный доход</p>
+            <button class="btn btn-large">Создать аккаунт бесплатно →</button>
+        </section>
+        
+        <footer>
+            © 2024 GPU Pool. Все права защищены.
+        </footer>
+    </div>
+</body>
+</html>
